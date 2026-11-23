@@ -1,6 +1,8 @@
 <?php
 
-namespace App;
+namespace App\Core;
+
+use App\Models\Resource;
 
 class Validator {
     public static function validateResource(array $data): array {

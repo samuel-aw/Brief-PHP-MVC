@@ -1,7 +1,8 @@
 <?php
 
-namespace App;
+namespace App\Repositories;
 
+use App\Models\Resource;
 use PDO;
 
 class ResourceRepository {

@@ -1,3 +1,5 @@
+<?php use App\Models\Resource; ?>
+
 <?php if (!empty($errors)): ?>
     <div class="flash error">
         <ul>
@@ -22,7 +24,7 @@
     <label>
         Statut
         <select name="status">
-            <?php foreach (App\Resource::STATUSES as $value => $label): ?>
+            <?php foreach (Resource::STATUSES as $value => $label): ?>
                 <option value="<?= h($value) ?>" <?= $resource->status === $value ? 'selected' : '' ?>>
                     <?= h($label) ?>
                 </option>

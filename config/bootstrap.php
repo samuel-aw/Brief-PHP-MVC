@@ -7,10 +7,10 @@ spl_autoload_register(function (string $class): void {
         return;
     }
     $relativeClass = substr($class, strlen($prefix));
-    $file = __DIR__ . '/../src/' . str_replace('\\', '/', $relativeClass) . '.php';
+    $file = __DIR__ . '/../app/' . str_replace('\\', '/', $relativeClass) . '.php';
     if (is_file($file)) {
         require $file;
     }
 });
 
-require __DIR__ . '/../src/helpers.php';
+require __DIR__ . '/../app/helpers.php';

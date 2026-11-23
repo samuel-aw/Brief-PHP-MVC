@@ -1,8 +1,8 @@
 <?php
 
-namespace App;
+namespace App\Core;
 
-class Flash {
+class FlashMessage {
     public static function set(string $type, string $message): void {
         $_SESSION['flash'] = ['type' => $type, 'message' => $message];
     }

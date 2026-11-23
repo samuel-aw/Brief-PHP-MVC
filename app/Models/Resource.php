@@ -1,10 +1,9 @@
 <?php
 
-namespace App;
+namespace App\Models;
 
 class Resource {
 
-    // Source unique de vérité pour les statuts : valeur => libellé affiché
     public const STATUSES = [
         'disponible' => 'Disponible',
         'emprunte' => 'Emprunté',

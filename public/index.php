@@ -2,15 +2,29 @@
 
 require __DIR__ . '/../config/bootstrap.php';
 
-use App\Database;
-use App\Flash;
-use App\ResourceRepository;
+use App\Controllers\ResourceController;
+use App\Core\Router;
 
-$repository = new ResourceRepository(Database::getConnection());
-$resources = $repository->findAll();
-$flash = Flash::get();
-$pageTitle = 'Médiathèque interne';
+$router = new Router();
 
-require __DIR__ . '/../views/index.php';
-?>
+// Liste
+$router->get('/', [ResourceController::class, 'index']);
+$router->get('/resources', [ResourceController::class, 'index']);
+
+// Détail
+$router->get('/resources/show', [ResourceController::class, 'show']);
+
+// Ajout
+$router->get('/resources/create', [ResourceController::class, 'create']);
+$router->post('/resources/store', [ResourceController::class, 'store']);
+
+// Modification
+$router->get('/resources/edit', [ResourceController::class, 'edit']);
+$router->post('/resources/update', [ResourceController::class, 'update']);
+
+// Suppression
+$router->post('/resources/delete', [ResourceController::class, 'delete']);
+
+$router->dispatch($_SERVER['REQUEST_METHOD'], $_SERVER['REQUEST_URI']);
+
 

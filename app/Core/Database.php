@@ -1,5 +1,6 @@
 <?php
-namespace App;
+
+namespace App\Core;
 
 use PDO;
 use PDOException;
@@ -11,7 +12,7 @@ class Database
     public static function getConnection(): PDO
     {
         if (self::$instance === null) {
-            $config = require __DIR__ . '/../config/database.php';
+            $config = require __DIR__ . '/../../config/database.php';
             $dsn = 'mysql:host=' . $config['host']
                 . ';dbname=' . $config['database']
                 . ';charset=utf8mb4';

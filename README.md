@@ -1,19 +1,12 @@
-# Médiathèque interne (PHP orienté objet)
+# Médiathèque interne (PHP MVC)
 
 Application de gestion de ressources (livres, matériel, supports de cours…)
-refactorisée du PHP procédural vers le PHP orienté objet (POO).
-
-## Fonctionnalités
-
-- Lister les ressources
-- Ajouter, modifier et supprimer une ressource
-- Messages de confirmation et d'erreur (messages flash)
-- Validation des données côté serveur
+organisée en architecture MVC, à partir d'une version PHP POO.
 
 ## Prérequis
 
 - PHP 8.1 ou supérieur (testé avec PHP 8.3)
-- MySQL ou MariaDB (XAMPP, Laragon, WAMP ou installation autonome)
+- MySQL ou MariaDB (XAMPP, Laragon, WAMP…)
 - Extension PHP `pdo_mysql` activée
 - Git
 
@@ -21,116 +14,94 @@ refactorisée du PHP procédural vers le PHP orienté objet (POO).
 
 1. Cloner le dépôt :
    ```bash
-   git clone https://github.com/samuel-aw/Brief-PHP-vers-POO-2
-   cd proceduralPOO2
+   git clone https://github.com/samuel-aw/Brief-PHP-MVC
+   cd Brief_PHP_MVC
    ```
-
-2. Démarrer MySQL (par exemple depuis le panneau de contrôle de XAMPP).
-
-3. Importer la base de données (crée la base `mediatheque_poo2`, la table
-   `resources` et 5 ressources d'exemple) :
-
+2. Démarrer MySQL.
+3. Importer la base (crée `mediatheque_poo2`, la table `resources` et 5 exemples) :
    ```bash
    # Linux / macOS / Git Bash
    mysql -u root -p < database/schema.sql
    ```
-
    ```powershell
-   # Windows PowerShell (l'opérateur < n'y est pas supporté)
+   # Windows PowerShell
    mysql -u root -p -e "source database/schema.sql"
    ```
-
-   Alternative : dans phpMyAdmin, onglet **Importer**, choisir `database/schema.sql`.
-
-4. Créer le fichier de configuration à partir du modèle :
+   Ou via phpMyAdmin : onglet **Importer**, fichier `database/schema.sql`.
+4. Créer la configuration :
    ```bash
    cp config/database.example.php config/database.php
    ```
-   (Windows : `copy config\database.example.php config\database.php`)
-
-## Configuration
-
-Modifier `config/database.php` selon son environnement :
-
-```php
-return [
-    'host'     => 'localhost',
-    'database' => 'mediatheque_poo2',
-    'username' => 'root',
-    'password' => '',
-];
-```
-
-Ce fichier contient les identifiants : il est dans `.gitignore` et n'est pas
-versionné. Il est situé hors du dossier `public/`, donc inaccessible depuis
-le navigateur.
+   Puis adapter les identifiants dans `config/database.php` (fichier non versionné).
 
 ## Lancement
 
-Depuis la racine du projet :
-
 ```bash
-php -S localhost:8000 router.php
+php -S localhost:8000 -t public
 ```
 
-Puis ouvrir http://localhost:8000 dans le navigateur.
+Ouvrir http://localhost:8000
 
-## Structure du projet
+## Routes
+
+Toutes les requêtes passent par `public/index.php`.
+
+| Méthode | URL | Contrôleur | Rôle |
+|---|---|---|---|
+| GET | `/` et `/resources` | `ResourceController::index` | Liste des ressources |
+| GET | `/resources/show?id=3` | `ResourceController::show` | Détail d'une ressource |
+| GET | `/resources/create` | `ResourceController::create` | Formulaire d'ajout |
+| POST | `/resources/store` | `ResourceController::store` | Valide et enregistre |
+| GET | `/resources/edit?id=3` | `ResourceController::edit` | Formulaire de modification |
+| POST | `/resources/update?id=3` | `ResourceController::update` | Valide et met à jour |
+| POST | `/resources/delete?id=3` | `ResourceController::delete` | Supprime |
+
+Une URL inconnue renvoie une erreur 404. Une méthode non autorisée
+(ex. GET sur `/resources/delete`) renvoie une erreur 405.
+
+## Architecture MVC
 
 ```
-├── config/
-│   ├── bootstrap.php           Session + autoloader + chargement des helpers
-│   ├── database.php            Identifiants MySQL (non versionné)
-│   └── database.example.php    Modèle de configuration
-├── database/
-│   └── schema.sql              Création de la base et données d'exemple
-├── public/                     Seul dossier accessible depuis le navigateur
-│   ├── assets/style.css
-│   ├── index.php               Liste
-│   ├── create.php              Ajout
-│   ├── edit.php                Modification
-│   └── delete.php              Suppression
-├── src/                        Classes (namespace App)
-│   ├── Database.php
-│   ├── Flash.php
-│   ├── Resource.php
-│   ├── ResourceRepository.php
-│   ├── Validator.php
-│   └── helpers.php
-├── views/                      Affichage HTML
-│   ├── index.php, create.php, edit.php
-│   └── partials/               header, footer, flash, resource_form
-├── router.php                  Routeur du serveur de développement PHP
-└── README.md
+Navigateur → public/index.php → Router → ResourceController → ResourceRepository → MySQL
+                                              │
+                                              ▼
+Navigateur ← HTML ← View + layout ← données préparées par le contrôleur
 ```
 
-## Description des classes
+- **Modèle** : `Resource` représente la donnée, `ResourceRepository` l'enregistre et la lit.
+- **Vue** : les fichiers de `views/` affichent les données reçues.
+- **Contrôleur** : `ResourceController` reçoit la requête, valide, appelle le repository, choisit la vue ou redirige.
 
-| Classe | Rôle |
+Après un ajout, une modification ou une suppression, le contrôleur **redirige**
+(motif Post/Redirect/Get) : pas de double soumission au rafraîchissement.
+
+## Rôle de chaque dossier
+
+| Dossier | Rôle |
 |---|---|
-| `Database` | Crée et fournit la connexion PDO unique (singleton). Seule classe qui lit la configuration. |
-| `Resource` | Représente une ressource (propriétés typées). Contient la liste des statuts autorisés (`STATUSES`) et la méthode `fromArray()` qui transforme un tableau en objet. |
-| `ResourceRepository` | Contient toutes les requêtes SQL : `findAll`, `find`, `create`, `update`, `delete`. |
-| `Validator` | Contrôle les données d'un formulaire et retourne la liste des erreurs. |
-| `Flash` | Stocke un message en session pour l'afficher une seule fois après une redirection. |
-
-Les fichiers de `public/` jouent le rôle de contrôleurs : ils récupèrent la
-requête, appellent les classes, puis chargent une vue. Ils ne contiennent ni
-SQL ni HTML.
+| `public/` | Seul dossier accessible depuis le navigateur : `index.php` (point d'entrée et routes) et `assets/` |
+| `app/Controllers/` | Contrôleurs : traitement des requêtes HTTP, sans HTML |
+| `app/Models/` | Modèles : objets métier (`Resource`) |
+| `app/Repositories/` | Accès aux données : toutes les requêtes SQL |
+| `app/Core/` | Briques techniques : `Database`, `Router`, `View`, `FlashMessage`, `Validator` |
+| `views/layouts/` | Gabarit HTML commun (`main.php`) |
+| `views/resources/` | Vues des ressources (liste, ajout, modification, détail) |
+| `views/errors/` | Vue des erreurs 404 et 405 |
+| `config/` | Démarrage (`bootstrap.php`) et configuration de la base |
+| `database/` | Script SQL |
 
 ## Sécurité
 
-- Requêtes préparées PDO (protection contre l'injection SQL)
-- Validation côté serveur avant toute insertion ou modification
-- Échappement de toutes les données affichées avec `htmlspecialchars` (fonction `h()`)
-- Identifiants de connexion hors du dossier public et exclus de Git
-- Suppression uniquement par requête POST
+- Requêtes préparées PDO (dans le repository uniquement)
+- Validation côté serveur avant insertion ou modification
+- Échappement de toutes les données affichées (`h()` = `htmlspecialchars`)
+- Identifiants hors de `public/` et exclus de Git
+- Suppression uniquement en POST
 
-## Tester le CRUD
+## 5 cas de test manuels
 
-1. La liste affiche les ressources.
-2. Ajouter une ressource valide : message vert, ressource visible.
-3. Envoyer un titre vide : message d'erreur, valeurs conservées.
-4. Modifier une ressource : message de confirmation.
-5. Ouvrir `edit.php?id=9999` : message « Ressource introuvable ».
-6. Supprimer une ressource : confirmation, puis la ligne disparaît.
+1. **Liste** : ouvrir `/resources` → les ressources s'affichent, la plus récente en premier.
+2. **Ajout valide** : remplir le formulaire → redirection vers la liste, message vert « Ressource ajoutée. », puis F5 : aucune ressource en double.
+3. **Ajout invalide** : retirer l'attribut `required` (outils de développement) et envoyer un titre vide → le formulaire revient avec le message d'erreur et les valeurs saisies.
+4. **Ressource inexistante** : ouvrir `/resources/edit?id=9999` → retour à la liste avec le message « Ressource introuvable. »
+5. **Suppression et sécurité** : supprimer une ressource (confirmation puis message vert) ; ouvrir `/resources/delete?id=1` dans la barre d'adresse → erreur 405 ; créer une ressource au titre `<b>test</b>` → affiché tel quel, sans mise en gras.
